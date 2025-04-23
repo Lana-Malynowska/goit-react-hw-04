@@ -1,0 +1,30 @@
+.header {
+  margin: 0 auto;
+}
+
+.form {
+  display: flex;
+  gap: 0.6em;
+  margin: 0 auto;
+}
+
+.input {
+  border: 1px solid rgba(255, 255, 255, 0.87);
+  border-radius: 8px;
+  width: 25rem;
+  padding: 0.6em 1.2em;
+  font-family: inherit;
+  font-size: 1em;
+  outline: none;
+}
+
+.input:hover {
+  border-color: #646cff;
+}
+
+@media (prefers-color-scheme: light) {
+  .input {
+    background-color: #f9f9f9;
+    border: 1px solid #213547;
+  }
+}

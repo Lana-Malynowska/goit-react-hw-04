@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchPhotos } from "./services/api";
 import SearchBar from "./components/SearchBar/SearchBar";
 import ImageGallery from "./components/ImageGallery/ImageGallery";
 import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
 import { Toaster } from "react-hot-toast";
 import { RingLoader } from "react-spinners";
 
 import "./App.css";
-import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
+import ImageModal from "./components/ImageModal/ImageModal";
 
 function App() {
   const [photos, setPhotos] = useState([]);
@@ -16,7 +17,9 @@ function App() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState(false);
-  const PER_PAGE = 12;
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const galleryRef = useRef(null);
 
   useEffect(() => {
     if (!query) return;
@@ -24,16 +27,14 @@ function App() {
     const getPhotos = async () => {
       try {
         setLoading(true);
-        const data = await fetchPhotos(query, page);
-        setPhotos((prev) => (page === 1 ? data : [...prev, ...data]));
+        const { photos: newPhotos, totalPages } = await fetchPhotos(
+          query,
+          page
+        );
+        setPhotos((prev) => (page === 1 ? newPhotos : [...prev, ...newPhotos]));
 
-        if (data.length < PER_PAGE) {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-        }
-      } catch (error) {
-        console.log(error);
+        setHasMore(page < totalPages);
+      } catch {
         setError(true);
       } finally {
         setLoading(false);
@@ -41,6 +42,15 @@ function App() {
     };
     getPhotos();
   }, [query, page]);
+
+  useEffect(() => {
+    if (page === 1 || !galleryRef.current) return;
+
+    galleryRef.current.scrollTo({
+      top: galleryRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [photos, page]);
 
   const handleSearchSubmit = (searchQuery) => {
     setQuery(searchQuery);
@@ -53,6 +63,16 @@ function App() {
     setPage((prevPage) => prevPage + 1);
   };
 
+  const handlePhotoClick = (photo) => {
+    setSelectedPhoto(photo);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedPhoto(null);
+  };
+
   return (
     <>
       <Toaster position="top-right" />
@@ -62,13 +82,31 @@ function App() {
         <ErrorMessage />
       ) : (
         <>
-          <ImageGallery photos={photos} />
-          {loading && <RingLoader color="#646cffaa" size={100} />}
+          <ImageGallery
+            photos={photos}
+            onPhotoClick={handlePhotoClick}
+            galleryRef={galleryRef}
+          />
+          {loading && (
+            <RingLoader
+              color="#646cffaa"
+              size={50}
+              cssOverride={{
+                margin: "0 auto",
+              }}
+            />
+          )}
           {photos.length > 0 && hasMore && !loading && (
             <LoadMoreBtn onClick={handleLoadMore} />
           )}
         </>
       )}
+
+      <ImageModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        photo={selectedPhoto}
+      />
     </>
   );
 }

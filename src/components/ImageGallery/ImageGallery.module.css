@@ -1,0 +1,11 @@
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6em;
+  padding: 0.6em;
+  max-width: 1280px;
+  margin: 0 auto;
+  overflow-y: auto;
+  max-height: 85vh;
+}
